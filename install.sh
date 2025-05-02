@@ -85,7 +85,7 @@ esac
 show_progress "Atualizando repositórios e instalando pacotes..."
 apt update -y >> "$LOG_FILE" 2>&1 || error_exit "Falha ao atualizar repositórios"
 apt upgrade -y >> "$LOG_FILE" 2>&1 || error_exit "Falha ao atualizar sistema"
-apt install -y curl build-essential git python3 python3-pip stunnel4 openssl lsb-release sed coreutils cron systemd openssh-server libc6-dev libssl-dev ca-certificates procps >> "$LOG_FILE" 2>&1 || error_exit "Falha ao instalar pacotes"
+apt install -y htop curl build-essential git python3 python3-pip stunnel4 openssl lsb-release sed coreutils cron systemd openssh-server libc6-dev libssl-dev ca-certificates procps >> "$LOG_FILE" 2>&1 || error_exit "Falha ao instalar pacotes"
 
 # Instalar Rust
 show_progress "Instalando Rust..."
