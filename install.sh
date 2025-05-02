@@ -19,6 +19,8 @@ readonly CRON_LINES=(
     "* * * * * python3 /opt/tools/checker_websocket.py >> /var/log/checker_websocket.log 2>&1"
 )
 readonly RUSTYPROXY_DIR="/opt/rustyproxy"
+readonly SINCRONIZAR_ORIGEM="/root/RustyProxyOnly/sincronizar.py"
+readonly SINCRONIZAR_DESTINO="/root/sincronizar.py"
 
 # Função para mostrar progresso
 show_progress() {
@@ -60,7 +62,7 @@ check_command cargo || show_progress "Cargo não encontrado, será instalado com
 # Verificar sistema operacional
 show_progress "Verificando sistema operacional..."
 if ! command -v lsb_release &>/dev/null; then
-    apt install -y lsb-release || error_exit "Falha ao instalar lsb-release"
+    apt install -y lsb-release >> "$LOG_FILE" 2>&1 || error_exit "Falha ao instalar lsb-release"
 fi
 OS_NAME=$(lsb_release -is)
 VERSION=$(lsb_release -rs)
@@ -90,16 +92,16 @@ case "$OS_NAME" in
         ;;
 esac
 
-# Atualizar repositórios e sistema
-show_progress "Atualizando repositórios e sistema..."
-apt update -y || error_exit "Falha ao atualizar repositórios"
-apt upgrade -y || error_exit "Falha ao atualizar sistema"
-apt install -y curl build-essential git python3 python3-pip || error_exit "Falha ao instalar pacotes"
+# Atualizar repositórios e instalar pacotes
+show_progress "Atualizando repositórios e instalando pacotes..."
+apt update -y >> "$LOG_FILE" 2>&1 || error_exit "Falha ao atualizar repositórios"
+apt upgrade -y >> "$LOG_FILE" 2>&1 || error_exit "Falha ao atualizar sistema"
+apt install -y curl build-essential git python3 python3-pip stunnel4 openssl lsb-release sed coreutils cron systemd openssh-server libc6-dev libssl-dev ca-certificates procps >> "$LOG_FILE" 2>&1 || error_exit "Falha ao instalar pacotes"
 
 # Instalar Rust
 show_progress "Instalando Rust..."
 if ! command -v rustc &>/dev/null; then
-    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y || error_exit "Falha ao instalar Rust"
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y >> "$LOG_FILE" 2>&1 || error_exit "Falha ao instalar Rust"
     source "$HOME/.cargo/env"
 fi
 check_command cargo
@@ -111,11 +113,21 @@ mkdir -p "$RUSTYPROXY_DIR" || error_exit "Falha ao criar $RUSTYPROXY_DIR"
 # Instalar RustyProxy
 show_progress "Compilando RustyProxy (pode levar algum tempo)..."
 [ -d "/root/RustyProxyOnly" ] && rm -rf /root/RustyProxyOnly
-git clone --branch main https://github.com/adfastltda/RustyProxyOnly.git /root/RustyProxyOnly || error_exit "Falha ao clonar RustyProxy"
+git clone --branch main https://github.com/adfastltda/RustyProxyOnly.git /root/RustyProxyOnly >> "$LOG_FILE" 2>&1 || error_exit "Falha ao clonar RustyProxy"
 mv /root/RustyProxyOnly/menu.sh "$RUSTYPROXY_DIR/menu" || error_exit "Falha ao mover menu"
 cd /root/RustyProxyOnly/RustyProxy || error_exit "Diretório RustyProxy não encontrado"
-cargo build --release --jobs "$(nproc)" || error_exit "Falha ao compilar RustyProxy"
+cargo build --release --jobs "$(nproc)" >> "$LOG_FILE" 2>&1 || error_exit "Falha ao compilar RustyProxy"
 mv ./target/release/RustyProxy "$RUSTYPROXY_DIR/proxy" || error_exit "Falha ao mover binário RustyProxy"
+
+# Configurar sincronizar.py
+show_progress "Configurando sincronizar.py..."
+if [ -f "$SINCRONIZAR_ORIGEM" ]; then
+    rm -f "$SINCRONIZAR_DESTINO" || show_progress "Aviso: Falha ao remover $SINCRONIZAR_DESTINO existente"
+    mv "$SINCRONIZAR_ORIGEM" "$SINCRONIZAR_DESTINO" || error_exit "Falha ao mover sincronizar.py para $SINCRONIZAR_DESTINO"
+    chmod 755 "$SINCRONIZAR_DESTINO" || error_exit "Falha ao definir permissões para $SINCRONIZAR_DESTINO"
+else
+    show_progress "Aviso: Arquivo $SINCRONIZAR_ORIGEM não encontrado, pulando configuração de sincronizar.py"
+fi
 
 # Configurar permissões do RustyProxy
 show_progress "Configurando permissões do RustyProxy..."
@@ -123,14 +135,14 @@ chmod +x "$RUSTYPROXY_DIR/proxy" "$RUSTYPROXY_DIR/menu" || error_exit "Falha ao 
 ln -sf "$RUSTYPROXY_DIR/menu" /usr/local/bin/rustyproxy || error_exit "Falha ao criar link simbólico"
 
 # Instalar e configurar STunnel
-show_progress "Instalando STunnel e OpenSSL..."
-apt install -y stunnel4 openssl || error_exit "Falha ao instalar pacotes"
+show_progress "Instalando STunnel..."
+apt install -y stunnel4 openssl >> "$LOG_FILE" 2>&1 || error_exit "Falha ao instalar pacotes"
 show_progress "Gerando certificados autoassinados..."
 mkdir -p "$CERT_DIR" || error_exit "Falha ao criar $CERT_DIR"
 if [ ! -f "$CERT_FILE" ] || [ ! -f "$KEY_FILE" ]; then
     openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
         -keyout "$KEY_FILE" -out "$CERT_FILE" \
-        -subj "/C=US/ST=State/L=City/O=Organization/OU=Unit/CN=localhost" || error_exit "Falha ao gerar certificados"
+        -subj "/C=US/ST=State/L=City/O=Organization/OU=Unit/CN=localhost" >> "$LOG_FILE" 2>&1 || error_exit "Falha ao gerar certificados"
     chmod 600 "$CERT_FILE" "$KEY_FILE" || error_exit "Falha ao configurar permissões dos certificados"
 else
     show_progress "Certificados já existem, pulando geração..."
@@ -154,8 +166,8 @@ if [ -f /etc/default/stunnel4 ]; then
 else
     error_exit "Arquivo /etc/default/stunnel4 não encontrado."
 fi
-systemctl enable stunnel4 || error_exit "Falha ao habilitar serviço STunnel"
-systemctl restart stunnel4 || error_exit "Falha ao reiniciar serviço STunnel"
+systemctl enable stunnel4 >> "$LOG_FILE" 2>&1 || error_exit "Falha ao habilitar serviço STunnel"
+systemctl restart stunnel4 >> "$LOG_FILE" 2>&1 || error_exit "Falha ao reiniciar serviço STunnel"
 if ! systemctl is-active --quiet stunnel4; then
     error_exit "O serviço STunnel não está ativo. Verifique os logs com 'journalctl -u stunnel4'."
 fi
@@ -174,7 +186,7 @@ if ! grep -q "^$MAX_STARTUPS" "$SSH_CONFIG"; then
     error_exit "Falha ao verificar a configuração $MAX_STARTUPS no $SSH_CONFIG"
 fi
 show_progress "Reiniciando serviço SSH..."
-systemctl restart sshd || error_exit "Falha ao reiniciar serviço SSH"
+systemctl restart sshd >> "$LOG_FILE" 2>&1 || error_exit "Falha ao reiniciar serviço SSH"
 if ! systemctl is-active --quiet sshd; then
     error_exit "O serviço SSH não está ativo. Verifique os logs com 'journalctl -u sshd'."
 fi
@@ -270,6 +282,7 @@ if __name__ == "__main__":
     conectar_https(host, porta)
 EOF
 chmod 755 "$CHECKER_STUNNEL" || error_exit "Falha ao definir permissões para $CHECKER_STUNNEL"
+show_progress "Aviso: O script $CHECKER_WEBSOCKET depende de um serviço 'websocket'. Certifique-se de que ele está configurado."
 
 # Configurar crontab
 show_progress "Criando backup do crontab atual..."
@@ -288,10 +301,6 @@ show_progress "Verificando crontab..."
 if ! crontab -l | grep -q "checker_stunnel4.py" || ! crontab -l | grep -q "checker_websocket.py"; then
     error_exit "Falha ao verificar entradas no crontab"
 fi
-
-#sincronizar DragonCore
-rm /root/sincronizar.py
-mv /root/RustyProxyOnly/sincronizar.py /root/sincronizar.py
 
 # Limpeza
 show_progress "Limpando diretórios temporários..."
