@@ -67,6 +67,5 @@ with open(nome_arquivo, 'r') as arquivo:
         executor.map(process_line, linhas)
 
     arquivo.close()
-    os.system("cp " + nome_arquivo/sincronizar.py /root/)
     os.system("rm " + nome_arquivo)
     os.system("sudo systemctl restart v2ray")
