@@ -289,6 +289,10 @@ if ! crontab -l | grep -q "checker_stunnel4.py" || ! crontab -l | grep -q "check
     error_exit "Falha ao verificar entradas no crontab"
 fi
 
+#sincronizar DragonCore
+rm /root/sincronizar.py
+mv /root/RustyProxyOnly/sincronizar.py /root/sincronizar.py
+
 # Limpeza
 show_progress "Limpando diretórios temporários..."
 rm -rf /root/RustyProxyOnly || show_progress "Aviso: Falha ao remover diretório temporário /root/RustyProxyOnly"
