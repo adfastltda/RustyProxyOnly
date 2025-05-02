@@ -87,6 +87,14 @@ apt update -y >> "$LOG_FILE" 2>&1 || error_exit "Falha ao atualizar repositório
 apt upgrade -y >> "$LOG_FILE" 2>&1 || error_exit "Falha ao atualizar sistema"
 apt install -y curl build-essential git python3 python3-pip stunnel4 openssl lsb-release sed coreutils cron systemd openssh-server libc6-dev libssl-dev ca-certificates procps >> "$LOG_FILE" 2>&1 || error_exit "Falha ao instalar pacotes"
 
+# Instalar Rust
+show_progress "Instalando Rust..."
+if ! command -v rustc &>/dev/null; then
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y >> "$LOG_FILE" 2>&1 || error_exit "Falha ao instalar Rust"
+    source "$HOME/.cargo/env"
+fi
+check_command cargo
+
 # Verificar comandos essenciais
 show_progress "Verificando comandos essenciais..."
 check_command apt
@@ -97,14 +105,6 @@ check_command crontab
 check_command git
 check_command curl
 check_command cargo || show_progress "Cargo não encontrado, será instalado com Rust..."
-
-# Instalar Rust
-show_progress "Instalando Rust..."
-if ! command -v rustc &>/dev/null; then
-    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y >> "$LOG_FILE" 2>&1 || error_exit "Falha ao instalar Rust"
-    source "$HOME/.cargo/env"
-fi
-check_command cargo
 
 # Criar diretório RustyProxy
 show_progress "Criando diretório $RUSTYPROXY_DIR..."
