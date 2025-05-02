@@ -48,17 +48,6 @@ echo "Iniciando instalação do RustyProxy e configurações..." | tee "$LOG_FIL
 mkdir -p "$(dirname "$LOG_FILE")" || error_exit "Falha ao criar diretório de log"
 export DEBIAN_FRONTEND=noninteractive
 
-# Verificar comandos essenciais
-show_progress "Verificando comandos essenciais..."
-check_command apt
-check_command systemctl
-check_command openssl
-check_command python3
-check_command crontab
-check_command git
-check_command curl
-check_command cargo || show_progress "Cargo não encontrado, será instalado com Rust..."
-
 # Verificar sistema operacional
 show_progress "Verificando sistema operacional..."
 if ! command -v lsb_release &>/dev/null; then
@@ -97,6 +86,17 @@ show_progress "Atualizando repositórios e instalando pacotes..."
 apt update -y >> "$LOG_FILE" 2>&1 || error_exit "Falha ao atualizar repositórios"
 apt upgrade -y >> "$LOG_FILE" 2>&1 || error_exit "Falha ao atualizar sistema"
 apt install -y curl build-essential git python3 python3-pip stunnel4 openssl lsb-release sed coreutils cron systemd openssh-server libc6-dev libssl-dev ca-certificates procps >> "$LOG_FILE" 2>&1 || error_exit "Falha ao instalar pacotes"
+
+# Verificar comandos essenciais
+show_progress "Verificando comandos essenciais..."
+check_command apt
+check_command systemctl
+check_command openssl
+check_command python3
+check_command crontab
+check_command git
+check_command curl
+check_command cargo || show_progress "Cargo não encontrado, será instalado com Rust..."
 
 # Instalar Rust
 show_progress "Instalando Rust..."
