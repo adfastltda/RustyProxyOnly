@@ -196,6 +196,7 @@ show_progress "Criando diretório $TOOLS_DIR..."
 mkdir -p "$TOOLS_DIR" || error_exit "Falha ao criar $TOOLS_DIR"
 show_progress "Configurando $CHECKER_WEBSOCKET..."
 cat > "$CHECKER_WEBSOCKET" << 'EOF' || error_exit "Falha ao criar $CHECKER_WEBSOCKET"
+#!/usr/bin/env python3
 import socket
 import os
 
@@ -238,6 +239,7 @@ chmod 755 "$CHECKER_WEBSOCKET" || error_exit "Falha ao definir permissões para 
 
 show_progress "Configurando $CHECKER_STUNNEL..."
 cat > "$CHECKER_STUNNEL" << 'EOF' || error_exit "Falha ao criar $CHECKER_STUNNEL"
+#!/usr/bin/env python3
 import socket
 import ssl
 import os
@@ -312,3 +314,5 @@ echo "Digite 'rustyproxy' para acessar o menu." | tee -a "$LOG_FILE"
 echo "Verifique os serviços com: systemctl status stunnel4 sshd" | tee -a "$LOG_FILE"
 echo "Logs detalhados em: $LOG_FILE" | tee -a "$LOG_FILE"
 echo "Logs dos checkers em: /var/log/checker_stunnel4.log e /var/log/checker_websocket.log" | tee -a "$LOG_FILE"
+
+reboot
