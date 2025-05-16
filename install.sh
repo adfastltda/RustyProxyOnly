@@ -5,7 +5,6 @@
 # Configurações globais
 readonly SWAP_FILE="/swapfile"
 readonly SWAP_SIZE="2G"
-readonly LOG_FILE="/var/log/enable_swap.log"
 readonly LOG_FILE="/var/log/rustyproxy_install.log"
 readonly STUNNEL_CONF="/etc/stunnel/stunnel.conf"
 readonly CERT_DIR="/etc/stunnel"
