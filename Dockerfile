@@ -1,5 +1,5 @@
 # Use a supported Ubuntu version as a base image (e.g., Ubuntu 22.04)
-FROM ubuntu:22.04
+FROM debian:11
 
 # Set DEBIAN_FRONTEND to noninteractive to avoid prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
