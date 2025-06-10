@@ -13,7 +13,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 #           before the script's own 'apt install' for procps.
 # The script itself will install many more packages.
 RUN apt-get update && \
-    apt-get install -y sudo git curl ca-certificates procps && \
+    apt-get install -y sudo git curl ca-certificates procps lsb-release && \
     rm -rf /var/lib/apt/lists/*
 
 # Set the working directory in the container
