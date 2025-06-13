@@ -317,7 +317,6 @@ echo "Instalação e configuração concluídas com sucesso." | tee -a "$LOG_FIL
 echo "Verifique os serviços com: systemctl status stunnel4 sshd" | tee -a "$LOG_FILE"
 echo "Logs detalhados em: $LOG_FILE" | tee -a "$LOG_FILE"
 echo "Logs dos checkers em: /var/log/checker_stunnel4.log e /var/log/checker_websocket.log" | tee -a "$LOG_FILE"
-echo "Configuração do swap concluída com sucesso." | tee -a "$LOG_FILE"
 echo "Logs detalhados em: $LOG_FILE" | tee -a "$LOG_FILE"
 echo "Digite 'rustyproxy' para acessar o menu." | tee -a "$LOG_FILE"
 echo -e "${VERDE}BadVPN instalado/atualizado e rodando via systemd!${RESET}" | tee -a "$LOG_FILE"
