@@ -3,8 +3,6 @@
 # RustyProxy Installer - Versão Unificada
 
 # Configurações globais
-readonly SWAP_FILE="/swapfile"
-readonly SWAP_SIZE="2G"
 readonly LOG_FILE="/var/log/rustyproxy_install.log"
 readonly STUNNEL_CONF="/etc/stunnel/stunnel.conf"
 readonly CERT_DIR="/etc/stunnel"
@@ -305,59 +303,6 @@ show_progress "Verificando crontab..."
 if ! crontab -l | grep -q "checker_stunnel4.py" || ! crontab -l | grep -q "checker_websocket.py"; then
     error_exit "Falha ao verificar entradas no crontab"
 fi
-
-# Verificar se o file já existe
-#show_progress "Verificando se o swapfile já existe..."
-#if [ -f "$SWAP_FILE" ]; then
-#    show_progress "Swapfile $SWAP_FILE já existe. Verificando se está ativo..."
-#    if swapon --show | grep -q "$SWAP_FILE"; then
-#        show_progress "Swapfile $SWAP_FILE já está ativo. Nenhuma ação necessária."
-#        exit 0
-#    else
-#        show_progress "Swapfile existe, mas não está ativo. Ativando..."
-#        swapon "$SWAP_FILE" >> "$LOG_FILE" 2>&1 || error_exit "Falha ao ativar swapfile existente"
-#        show_progress "Swapfile ativado com sucesso."
-#        exit 0
-#    fi
-#fi
-
-# Verificar espaço em disco
-show_progress "Verificando espaço em disco..."
-AVAILABLE_SPACE=$(df -B1 / | tail -1 | awk '{print $4}')
-MINIMUM_SPACE=$((2 * 1024 * 1024 * 1024))  # 2GB em bytes
-if [ "$AVAILABLE_SPACE" -lt "$MINIMUM_SPACE" ]; then
-    error_exit "Espaço insuficiente em disco. Necessário 2GB, disponível: $((AVAILABLE_SPACE / 1024 / 1024))MB"
-fi
-
-# Criar swapfile
-show_progress "Criando swapfile de $SWAP_SIZE..."
-fallocate -l "$SWAP_SIZE" "$SWAP_FILE" >> "$LOG_FILE" 2>&1 || error_exit "Falha ao criar swapfile"
-chmod 600 "$SWAP_FILE" >> "$LOG_FILE" 2>&1 || error_exit "Falha ao definir permissões do swapfile"
-
-# Configurar swapfile
-show_progress "Configurando swapfile..."
-mkswap "$SWAP_FILE" >> "$LOG_FILE" 2>&1 || error_exit "Falha ao configurar swapfile"
-swapon "$SWAP_FILE" >> "$LOG_FILE" 2>&1 || error_exit "Falha ao ativar swapfile"
-
-# Adicionar ao /etc/fstab
-show_progress "Adicionando swapfile ao /etc/fstab..."
-if ! grep -q "$SWAP_FILE" /etc/fstab; then
-    echo "$SWAP_FILE none swap sw 0 0" >> /etc/fstab || error_exit "Falha ao adicionar swapfile ao /etc/fstab"
-else
-    show_progress "Swapfile já está configurado no /etc/fstab, pulando..."
-fi
-
-# Verificar se o swap está ativo
-show_progress "Verificando status do swap..."
-if swapon --show | grep -q "$SWAP_FILE"; then
-    show_progress "Swap de 2GB ativado com sucesso."
-else
-    error_exit "Falha ao verificar swap ativo. Verifique com 'swapon --show'."
-fi
-
-# Exibir informações do swap
-show_progress "Informações do swap:"
-free -h | tee -a "$LOG_FILE"
 
 #install speedtest
 curl -s https://packagecloud.io/install/repositories/ookla/speedtest-cli/script.deb.sh | sudo bash
