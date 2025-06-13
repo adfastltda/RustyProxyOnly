@@ -306,20 +306,20 @@ if ! crontab -l | grep -q "checker_stunnel4.py" || ! crontab -l | grep -q "check
     error_exit "Falha ao verificar entradas no crontab"
 fi
 
-# Verificar se o swapfile já existe
-show_progress "Verificando se o swapfile já existe..."
-if [ -f "$SWAP_FILE" ]; then
-    show_progress "Swapfile $SWAP_FILE já existe. Verificando se está ativo..."
-    if swapon --show | grep -q "$SWAP_FILE"; then
-        show_progress "Swapfile $SWAP_FILE já está ativo. Nenhuma ação necessária."
-        exit 0
-    else
-        show_progress "Swapfile existe, mas não está ativo. Ativando..."
-        swapon "$SWAP_FILE" >> "$LOG_FILE" 2>&1 || error_exit "Falha ao ativar swapfile existente"
-        show_progress "Swapfile ativado com sucesso."
-        exit 0
-    fi
-fi
+# Verificar se o file já existe
+#show_progress "Verificando se o swapfile já existe..."
+#if [ -f "$SWAP_FILE" ]; then
+#    show_progress "Swapfile $SWAP_FILE já existe. Verificando se está ativo..."
+#    if swapon --show | grep -q "$SWAP_FILE"; then
+#        show_progress "Swapfile $SWAP_FILE já está ativo. Nenhuma ação necessária."
+#        exit 0
+#    else
+#        show_progress "Swapfile existe, mas não está ativo. Ativando..."
+#        swapon "$SWAP_FILE" >> "$LOG_FILE" 2>&1 || error_exit "Falha ao ativar swapfile existente"
+#        show_progress "Swapfile ativado com sucesso."
+#        exit 0
+#    fi
+#fi
 
 # Verificar espaço em disco
 show_progress "Verificando espaço em disco..."
